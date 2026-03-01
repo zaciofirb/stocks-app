@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>חיפוש מניות</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #080c14;
+    color: #e8eaf0;
+    font-family: 'Courier New', monospace;
+    padding: 16px 12px 40px;
+    min-height: 100vh;
+    direction: rtl;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+  .wrap { position: relative; z-index: 1; }
+
+  /* API KEY SCREEN */
+  #apiScreen {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 80vh; text-align: center; gap: 16px;
+  }
+  #apiScreen h2 { font-size: 20px; color: #00e5a0; letter-spacing: 0.1em; }
+  #apiScreen p { color: #5a6478; font-size: 12px; line-height: 1.7; max-width: 340px; }
+  #apiScreen a { color: #00e5a0; }
+  #apiKeyInput {
+    width: 100%; max-width: 340px; padding: 12px 14px;
+    background: #0d1420; border: 1px solid #1e2740;
+    border-radius: 8px; color: #e8eaf0; font-size: 13px;
+    font-family: 'Courier New', monospace; outline: none;
+    direction: ltr; text-align: left;
+  }
+  #apiKeyInput:focus { border-color: #00e5a0; }
+  #saveKeyBtn {
+    padding: 10px 28px; background: #00e5a0; color: #080c14;
+    border: none; border-radius: 6px; cursor: pointer;
+    font-family: 'Courier New', monospace; font-size: 13px;
+    font-weight: 700; letter-spacing: 0.1em;
+  }
+  #saveKeyBtn:hover { background: #00ffb3; }
+
+  /* MAIN APP */
+  #mainApp { display: none; }
+
+  .header { text-align: center; margin-bottom: 16px; }
+  .header .tag { font-size: 10px; letter-spacing: 0.4em; color: #00e5a0; margin-bottom: 6px; }
+  .header h1 {
+    font-size: clamp(22px, 5vw, 40px); font-weight: 900;
+    background: linear-gradient(135deg, #fff 30%, #00e5a0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1;
+  }
+  .header p { color: #5a6478; font-size: 11px; margin-top: 5px; }
+
+  /* reset key */
+  .reset-key {
+    text-align: left; margin-bottom: 10px;
+  }
+  .reset-key button {
+    background: none; border: 1px solid #1e2740; color: #3a4560;
+    font-size: 9px; letter-spacing: 0.15em; padding: 3px 8px;
+    border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;
+  }
+  .reset-key button:hover { border-color: #00e5a0; color: #00e5a0; }
+
+  .fav-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .fav-label span { color: #f5a623; font-size: 11px; }
+  .fav-label small { color: #3a4560; font-size: 9px; letter-spacing: 0.3em; }
+  .fav-label .line { flex: 1; height: 1px; background: linear-gradient(to right, #1e2740, transparent); }
+
+  .fav-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px; margin-bottom: 14px;
+  }
+
+  .fav-card {
+    background: #0d1420; border: 1px solid #1a2236;
+    border-radius: 10px; padding: 10px; cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+  .fav-card:hover { transform: translateY(-2px); }
+  .fav-card .accent { position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .fav-card .sym { font-size: 12px; font-weight: 700; color: #e8eaf0; }
+  .fav-card .co  { font-size: 9px; color: #3a4560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .fav-card .price { font-size: 15px; font-weight: 900; color: #fff; margin-top: 8px; direction: ltr; text-align: left; }
+  .fav-card .chg { display: flex; align-items: center; gap: 4px; margin-top: 3px; flex-wrap: wrap; }
+  .fav-card .chg-val { font-size: 9px; font-weight: 700; }
+  .fav-card .chg-pct { font-size: 9px; padding: 1px 5px; border-radius: 100px; }
+  .fav-card .chg-ils { font-size: 9px; margin-top: 2px; }
+  .fav-card .loading-pulse { font-size: 9px; color: #3a4560; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+  .divider { height: 1px; background: linear-gradient(90deg, #1e2740, transparent); margin-bottom: 14px; }
+
+  .search-wrap { position: relative; z-index: 10; margin-bottom: 16px; }
+  .search-box {
+    display: flex; background: #0d1420;
+    border: 1px solid #1e2740; border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-box.focused { border-color: #00e5a0; box-shadow: 0 0 0 3px rgba(0,229,160,0.1); }
+  .search-icon { padding: 0 12px; display: flex; align-items: center; color: #3a4560; font-size: 18px; }
+  .search-box.focused .search-icon { color: #00e5a0; }
+  #searchInput {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: #e8eaf0; font-size: 14px; padding: 14px 0;
+    direction: ltr; text-align: left; font-family: 'Courier New', monospace;
+  }
+  #searchInput::placeholder { color: #3a4560; }
+  #searchBtn {
+    margin: 6px; padding: 0 16px; background: #00e5a0; color: #080c14;
+    border: none; border-radius: 5px; cursor: pointer;
+    font-family: 'Courier New', monospace; font-size: 12px;
+    font-weight: 700; letter-spacing: 0.1em;
+  }
+  #searchBtn:hover { background: #00ffb3; }
+
+  #suggestions {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: #0d1420; border: 1px solid #1e2740; border-radius: 8px;
+    overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    z-index: 100; display: none;
+  }
+  .sug-item { padding: 12px 16px; display: flex; justify-content: space-between; cursor: pointer; border-bottom: 1px solid #111827; }
+  .sug-item:hover { background: #131d2e; }
+  .sug-sym { color: #00e5a0; font-weight: 700; font-size: 13px; }
+  .sug-name { color: #5a6478; font-size: 12px; }
+
+  #loading { display: none; flex-direction: column; align-items: center; gap: 12px; padding: 30px 0; }
+  .spinner { width: 32px; height: 32px; border: 2px solid #1e2740; border-top: 2px solid #00e5a0; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #result { display: none; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+  .result-card {
+    background: linear-gradient(135deg, #0d1420, #0a1018);
+    border: 1px solid #1e2740; border-radius: 14px;
+    padding: 16px; position: relative; overflow: hidden;
+  }
+  .result-top-line { position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .result-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .result-sym { font-size: 24px; font-weight: 900; color: #fff; }
+  .result-badge { padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; display: inline-block; margin-right: 8px; }
+  .result-name { color: #3a4560; font-size: 11px; margin-top: 2px; }
+  .result-price { font-size: 30px; font-weight: 900; color: #fff; line-height: 1; direction: ltr; text-align: left; }
+  .result-change { font-size: 12px; margin-top: 2px; direction: ltr; text-align: left; }
+  .chart-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+
+  .change-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: #1e2740; border-radius: 8px 8px 0 0; overflow: hidden; }
+  .change-cell { background: #0d1420; padding: 12px 10px; text-align: right; }
+  .cell-val { font-size: 14px; font-weight: 700; }
+  .cell-lbl { font-size: 9px; color: #3a4560; margin-top: 5px; }
+
+  .meaning-strip { border: 1px solid #1e2740; border-top: none; border-radius: 0 0 8px 8px; padding: 10px 12px; font-size: 11px; line-height: 1.6; margin-bottom: 8px; }
+  .meaning-dir { font-weight: 600; }
+  .meaning-txt { color: #4a5568; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: #1e2740; border-radius: 8px; overflow: hidden; }
+  .stat-cell { background: #0d1420; padding: 10px 8px; text-align: center; }
+  .stat-lbl { color: #3a4560; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
+  .stat-val { color: #e8eaf0; font-size: 13px; font-weight: 600; }
+
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 9px; color: #00e5a0; letter-spacing: 0.15em;
+    margin-bottom: 10px;
+  }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: #00e5a0;
+    animation: blink 1.5s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .footer { margin-top: 40px; color: #1e2740; font-size: 10px; letter-spacing: 0.2em; text-align: center; }
+  .err-msg { color: #ff4d6d; font-size: 11px; text-align: center; padding: 16px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- API KEY SCREEN -->
+  <div id="apiScreen">
+    <div style="font-size:28px">📈</div>
+    <h2>חיפוש מניות — Live</h2>
+    <p>
+      האפליקציה משתמשת ב-<strong style="color:#e8eaf0">Finnhub</strong> לנתונים חיים.<br>
+      הירשם בחינם ב-<a href="https://finnhub.io" target="_blank">finnhub.io</a>
+      וקבל מפתח API חינמי.<br><br>
+      המפתח נשמר רק במכשיר שלך.
+    </p>
+    <input id="apiKeyInput" type="text" placeholder="הדבק כאן את מפתח ה-API שלך..." />
+    <button id="saveKeyBtn">התחל →</button>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp">
+
+    <div class="reset-key">
+      <button id="resetKeyBtn">⚙ החלף מפתח API</button>
+    </div>
+
+    <div class="header">
+      <div class="tag">◈ MARKET TERMINAL — LIVE</div>
+      <h1>חיפוש מניות</h1>
+      <p>נתונים חיים · Finnhub API · שוק גלובלי</p>
+    </div>
+
+    <div class="fav-label">
+      <span>★</span><small>מועדפים</small>
+      <div class="line"></div>
+    </div>
+    <div class="fav-grid" id="favGrid"></div>
+
+    <div class="divider"></div>
+
+    <div class="search-wrap">
+      <div class="search-box" id="searchBox">
+        <div class="search-icon">⌕</div>
+        <input id="searchInput" type="text" placeholder="סימול מניה... AAPL, TSLA, SPY" autocomplete="off" />
+        <button id="searchBtn">SEARCH</button>
+        <div id="suggestions"></div>
+      </div>
+    </div>
+
+    <div id="loading"><div class="spinner"></div><span style="color:#3a4560;font-size:11px;letter-spacing:0.3em">LOADING LIVE DATA...</span></div>
+    <div id="errMsg" class="err-msg" style="display:none"></div>
+
+    <div id="result">
+      <div class="live-badge"><div class="live-dot"></div>LIVE DATA</div>
+      <div class="result-card">
+        <div class="result-top-line" id="topLine"></div>
+        <div class="result-header">
+          <div>
+            <div><span class="result-sym" id="rSym"></span><span class="result-badge" id="rBadge"></span></div>
+            <div class="result-name" id="rName"></div>
+          </div>
+          <div>
+            <div class="result-price" id="rPrice"></div>
+            <div class="result-change" id="rChange"></div>
+          </div>
+        </div>
+        <div class="chart-row"><svg id="chartSvg" width="110" height="55" style="overflow:visible"></svg></div>
+        <div class="change-grid">
+          <div class="change-cell"><div class="cell-val" id="cDollar"></div><div class="cell-lbl">שינוי בדולר</div></div>
+          <div class="change-cell"><div class="cell-val" id="cShekel"></div><div class="cell-lbl">שינוי בשקל</div></div>
+          <div class="change-cell"><div class="cell-val" id="cPct"></div><div class="cell-lbl">שינוי באחוז</div></div>
+        </div>
+        <div class="meaning-strip" id="meaningStrip">
+          <span class="meaning-dir" id="mDir"></span>
+          <span class="meaning-txt" id="mTxt"></span>
+          <span class="meaning-txt" id="mExtra"></span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-cell"><div class="stat-lbl">גבוה</div><div class="stat-val" id="sHigh"></div></div>
+          <div class="stat-cell"><div class="stat-lbl">נמוך</div><div class="stat-val" id="sLow"></div></div>
+          <div class="stat-cell"><div class="stat-lbl">נפח</div><div class="stat-val" id="sVol"></div></div>
+          <div class="stat-cell"><div class="stat-lbl">סגירה קודמת</div><div class="stat-val" id="sPrev"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">MARKET TERMINAL · FINNHUB LIVE DATA</div>
+  </div>
+</div>
+
+<script>
+const USD_ILS = 3.65;
+const FAVORITES = ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN"];
+const STOCKS = [
+  { symbol: "AAPL",  name: "Apple Inc." },
+  { symbol: "TSLA",  name: "Tesla Inc." },
+  { symbol: "NVDA",  name: "NVIDIA Corp." },
+  { symbol: "AMZN",  name: "Amazon.com" },
+  { symbol: "MSFT",  name: "Microsoft" },
+  { symbol: "GOOGL", name: "Alphabet Inc." },
+  { symbol: "SPY",   name: "S&P 500 ETF" },
+  { symbol: "META",  name: "Meta Platforms" },
+  { symbol: "NFLX",  name: "Netflix" },
+];
+
+let API_KEY = localStorage.getItem('finnhub_key') || '';
+
+// ── API KEY SCREEN ──
+function initKeyScreen() {
+  if (API_KEY) {
+    showMain();
+  } else {
+    document.getElementById('apiScreen').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+  }
+}
+
+document.getElementById('saveKeyBtn').addEventListener('click', () => {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val) return;
+  API_KEY = val;
+  localStorage.setItem('finnhub_key', val);
+  showMain();
+});
+
+document.getElementById('apiKeyInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('saveKeyBtn').click();
+});
+
+function showMain() {
+  document.getElementById('apiScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  buildFavorites();
+}
+
+document.getElementById('resetKeyBtn').addEventListener('click', () => {
+  localStorage.removeItem('finnhub_key');
+  API_KEY = '';
+  document.getElementById('apiScreen').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('apiKeyInput').value = '';
+});
+
+// ── FINNHUB FETCH ──
+async function fetchQuote(symbol) {
+  const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('API error');
+  const d = await res.json();
+  if (!d.c || d.c === 0) throw new Error('סימול לא נמצא');
+  const change = +(d.c - d.pc).toFixed(2);
+  const changePct = +(((d.c - d.pc) / d.pc) * 100).toFixed(2);
+  return {
+    price: +d.c.toFixed(2),
+    change,
+    changePct,
+    high: +d.h.toFixed(2),
+    low: +d.l.toFixed(2),
+    prevClose: +d.pc.toFixed(2),
+    volume: "—",
+  };
+}
+
+// ── HELPERS ──
+function fmt(n) { return n >= 0 ? '+' + n : '' + n; }
+
+function getMeaning(pct) {
+  const a = Math.abs(pct);
+  if (a < 0.5) return "תנועה זניחה — המניה כמעט לא זזה היום";
+  if (a < 1.5) return "תנועה מתונה — שינוי יומי רגיל";
+  if (a < 3)   return "תנועה משמעותית — חריגה מהממוצע היומי";
+  if (a < 5)   return "תנועה חזקה — ייתכן אירוע חדשותי";
+  return "תנועה קיצונית — אירוע יוצא דופן";
+}
+function getDir(up, pct) {
+  const a = Math.abs(pct);
+  if (up) {
+    if (a < 1) return "עלייה קלה ביחס לסגירת אתמול";
+    if (a < 3) return "עלייה מוצקה — קונים גוברים";
+    return "עלייה חדה — מומנטום חיובי חזק";
+  } else {
+    if (a < 1) return "ירידה קלה ביחס לסגירת אתמול";
+    if (a < 3) return "ירידה מוצקה — מוכרים גוברים";
+    return "ירידה חדה — לחץ מכירות גבוה";
+  }
+}
+
+function makeSpark(up, w, h) {
+  const pts = Array.from({length:16}, (_,i) =>
+    40 + (up ? i*1.8 : -i*1.8) + (Math.random()-0.5)*18
+  );
+  const mn = Math.min(...pts), mx = Math.max(...pts);
+  const ny = v => (h-2) - ((v-mn)/(mx-mn))*(h-6);
+  const d = pts.map((p,i) => `${i===0?'M':'L'} ${(i/15)*w} ${ny(p)}`).join(' ');
+  const c = up ? '#00e5a0' : '#ff4d6d';
+  const id = 'g'+Math.random().toString(36).slice(2);
+  return `<svg width="${w}" height="${h}" style="overflow:visible;display:block">
+    <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${c}" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="${c}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${d} L ${w} ${h+4} L 0 ${h+4} Z" fill="url(#${id})"/>
+    <path d="${d}" stroke="${c}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ── FAVORITES ──
+function buildFavorites() {
+  const grid = document.getElementById('favGrid');
+  grid.innerHTML = '';
+  FAVORITES.forEach(sym => {
+    const card = document.createElement('div');
+    card.className = 'fav-card';
+    const name = STOCKS.find(s => s.symbol === sym)?.name || sym;
+    card.innerHTML = `
+      <div class="accent"></div>
+      <div class="sym">${sym}</div>
+      <div class="co">${name}</div>
+      <div class="loading-pulse">טוען...</div>
+    `;
+    card.addEventListener('click', () => doSearch(sym));
+    grid.appendChild(card);
+
+    // load live price
+    fetchQuote(sym).then(q => {
+      const up = q.change >= 0;
+      const c = up ? '#00e5a0' : '#ff4d6d';
+      card.querySelector('.accent').style.background =
+        `linear-gradient(90deg,transparent,${c}88,transparent)`;
+      card.style.setProperty('--hov-color', c);
+      card.innerHTML = `
+        <div class="accent" style="background:linear-gradient(90deg,transparent,${c}88,transparent)"></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+          <div><div class="sym">${sym}</div><div class="co">${name}</div></div>
+          ${makeSpark(up, 55, 24)}
+        </div>
+        <div class="price">$${q.price.toLocaleString()}</div>
+        <div class="chg">
+          <span class="chg-val" style="color:${c}">${up?'▲ ':' ▼'}${fmt(q.change)}$</span>
+          <span class="chg-pct" style="color:${c};background:${up?'rgba(0,229,160,0.1)':'rgba(255,77,109,0.1)'}">${fmt(q.changePct)}%</span>
+        </div>
+        <div class="chg-ils" style="color:${c}">${fmt((q.change*USD_ILS).toFixed(2))}₪</div>
+      `;
+      card.addEventListener('click', () => doSearch(sym));
+      card.addEventListener('mouseenter', () => {
+        card.style.borderColor = c;
+        card.style.boxShadow = `0 8px 20px ${up?'rgba(0,229,160,0.1)':'rgba(255,77,109,0.1)'}`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.borderColor = '#1a2236';
+        card.style.boxShadow = 'none';
+      });
+    }).catch(() => {
+      card.querySelector('.loading-pulse').textContent = 'שגיאה';
+    });
+  });
+}
+
+// ── SEARCH ──
+const input = document.getElementById('searchInput');
+const searchBox = document.getElementById('searchBox');
+const sugsEl = document.getElementById('suggestions');
+
+input.addEventListener('focus', () => { searchBox.classList.add('focused'); showSugs(input.value); });
+input.addEventListener('blur', () => { setTimeout(() => { searchBox.classList.remove('focused'); sugsEl.style.display='none'; }, 150); });
+input.addEventListener('input', () => { input.value = input.value.toUpperCase(); showSugs(input.value); });
+document.getElementById('searchBtn').addEventListener('click', () => { if (input.value.trim()) doSearch(input.value.trim().toUpperCase()); });
+input.addEventListener('keydown', e => { if (e.key==='Enter' && input.value.trim()) doSearch(input.value.trim().toUpperCase()); });
+
+function showSugs(q) {
+  if (!q) { sugsEl.style.display='none'; return; }
+  const m = STOCKS.filter(s => s.symbol.includes(q) || s.name.toLowerCase().includes(q.toLowerCase()));
+  if (!m.length) { sugsEl.style.display='none'; return; }
+  sugsEl.innerHTML = m.map(s =>
+    `<div class="sug-item" data-sym="${s.symbol}">
+      <span class="sug-sym">${s.symbol}</span><span class="sug-name">${s.name}</span>
+    </div>`
+  ).join('');
+  sugsEl.querySelectorAll('.sug-item').forEach(el => {
+    el.addEventListener('mousedown', () => doSearch(el.dataset.sym));
+  });
+  sugsEl.style.display = 'block';
+}
+
+async function doSearch(symbol) {
+  input.value = symbol;
+  sugsEl.style.display = 'none';
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('errMsg').style.display = 'none';
+
+  try {
+    const q = await fetchQuote(symbol);
+    document.getElementById('loading').style.display = 'none';
+
+    const up = q.change >= 0;
+    const col = up ? '#00e5a0' : '#ff4d6d';
+    const name = STOCKS.find(s => s.symbol === symbol)?.name || symbol;
+
+    document.getElementById('rSym').textContent = symbol;
+    document.getElementById('rName').textContent = name;
+
+    const badge = document.getElementById('rBadge');
+    badge.textContent = `${up?'▲':'▼'} ${fmt(q.changePct)}%`;
+    badge.style.cssText = `background:${up?'rgba(0,229,160,0.12)':'rgba(255,77,109,0.12)'};border:1px solid ${up?'rgba(0,229,160,0.3)':'rgba(255,77,109,0.3)'};color:${col}`;
+
+    document.getElementById('rPrice').textContent = `$${q.price.toLocaleString()}`;
+    document.getElementById('rChange').textContent = `${fmt(q.change)}$ היום`;
+    document.getElementById('rChange').style.color = col;
+    document.getElementById('topLine').style.background = `linear-gradient(90deg,transparent,${col},transparent)`;
+
+    // Chart (decorative sparkline based on direction)
+    const pts = Array.from({length:20}, (_,i) => 50+(up?i*1.5:-i*1.5)+(Math.random()-0.5)*20);
+    const mn=Math.min(...pts), mx=Math.max(...pts);
+    const ny=v=>50-((v-mn)/(mx-mn))*42;
+    const dp=pts.map((p,i)=>`${i===0?'M':'L'} ${(i/19)*110} ${ny(p)}`).join(' ');
+    const gid='gc'+Math.random().toString(36).slice(2);
+    document.getElementById('chartSvg').innerHTML = `
+      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${col}" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="${col}" stop-opacity="0"/>
+      </linearGradient></defs>
+      <path d="${dp} L 110 58 L 0 58 Z" fill="url(#${gid})"/>
+      <path d="${dp}" stroke="${col}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
+
+    // Change cells
+    document.getElementById('cDollar').textContent = `${fmt(q.change)}$`;
+    document.getElementById('cDollar').style.color = col;
+    document.getElementById('cShekel').textContent = `${fmt((q.change*USD_ILS).toFixed(2))}₪`;
+    document.getElementById('cShekel').style.color = col;
+    document.getElementById('cPct').textContent = `${fmt(q.changePct)}%`;
+    document.getElementById('cPct').style.color = col;
+
+    // Meaning
+    const strip = document.getElementById('meaningStrip');
+    strip.style.background = up ? 'rgba(0,229,160,0.04)' : 'rgba(255,77,109,0.04)';
+    const mDir = document.getElementById('mDir');
+    mDir.textContent = getDir(up, q.changePct);
+    mDir.style.color = col;
+    document.getElementById('mTxt').textContent = ` — ${getMeaning(q.changePct)}.`;
+    const extra = document.getElementById('mExtra');
+    if (Math.abs(q.changePct) >= 1) {
+      extra.innerHTML = ` 10 מניות = <span style="color:${col};font-weight:600">${fmt((q.change*10*USD_ILS).toFixed(0))}₪</span>.`;
+    } else { extra.textContent=''; }
+
+    // Stats
+    document.getElementById('sHigh').textContent = `$${q.high}`;
+    document.getElementById('sLow').textContent  = `$${q.low}`;
+    document.getElementById('sVol').textContent  = q.volume;
+    document.getElementById('sPrev').textContent = `$${q.prevClose}`;
+
+    document.getElementById('result').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    const err = document.getElementById('errMsg');
+    err.textContent = e.message === 'סימול לא נמצא' ? '⚠ הסימול לא נמצא. נסה שנית.' : '⚠ שגיאה בטעינת הנתונים. בדוק את מפתח ה-API.';
+    err.style.display = 'block';
+  }
+}
+
+initKeyScreen();
+</script>
+</body>
+</html>
