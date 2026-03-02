@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>חיפוש מניות</title>
+<title>Stock Terminal</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -49,22 +49,19 @@
   }
   #saveKeyBtn:hover { background: #00ffb3; }
 
-  /* MAIN APP */
   #mainApp { display: none; }
 
-  .header { text-align: center; margin-bottom: 16px; }
+  .header { text-align: center; margin-bottom: 16px; direction: ltr; }
   .header .tag { font-size: 10px; letter-spacing: 0.4em; color: #00e5a0; margin-bottom: 6px; }
   .header h1 {
-    font-size: clamp(22px, 5vw, 40px); font-weight: 900;
+    font-size: clamp(28px, 6vw, 52px); font-weight: 900;
     background: linear-gradient(135deg, #fff 30%, #00e5a0 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1;
+    letter-spacing: 0.05em;
   }
-  .header p { color: #5a6478; font-size: 11px; margin-top: 5px; }
+  .header p { color: #5a6478; font-size: 11px; margin-top: 5px; letter-spacing: 0.1em; }
 
-  /* reset key */
-  .reset-key {
-    text-align: left; margin-bottom: 10px;
-  }
+  .reset-key { text-align: left; margin-bottom: 10px; }
   .reset-key button {
     background: none; border: 1px solid #1e2740; color: #3a4560;
     font-size: 9px; letter-spacing: 0.15em; padding: 3px 8px;
@@ -73,7 +70,7 @@
   .reset-key button:hover { border-color: #00e5a0; color: #00e5a0; }
 
   .fav-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .fav-label span { color: #f5a623; font-size: 11px; }
+  .fav-label .fav-star { color: #f5a623; font-size: 11px; }
   .fav-label small { color: #3a4560; font-size: 9px; letter-spacing: 0.3em; }
   .fav-label .line { flex: 1; height: 1px; background: linear-gradient(to right, #1e2740, transparent); }
 
@@ -98,6 +95,17 @@
   .fav-card .chg-pct { font-size: 9px; padding: 1px 5px; border-radius: 100px; }
   .fav-card .chg-ils { font-size: 9px; margin-top: 2px; }
   .fav-card .loading-pulse { font-size: 9px; color: #3a4560; animation: pulse 1.5s infinite; }
+
+  /* Remove button on fav card */
+  .fav-remove {
+    position: absolute; top: 6px; left: 6px;
+    background: none; border: none; color: #2a3650;
+    font-size: 12px; cursor: pointer; line-height: 1;
+    padding: 2px; transition: color 0.15s;
+    z-index: 2;
+  }
+  .fav-remove:hover { color: #ff4d6d; }
+
   @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
 
   .divider { height: 1px; background: linear-gradient(90deg, #1e2740, transparent); margin-bottom: 14px; }
@@ -157,6 +165,18 @@
   .result-change { font-size: 12px; margin-top: 2px; direction: ltr; text-align: left; }
   .chart-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 
+  /* Add to favorites button in result */
+  .fav-toggle {
+    display: flex; align-items: center; gap: 6px;
+    background: none; border: 1px solid #1e2740;
+    border-radius: 6px; padding: 5px 12px;
+    color: #5a6478; font-size: 11px; cursor: pointer;
+    font-family: 'Courier New', monospace;
+    transition: all 0.2s; margin-bottom: 12px;
+  }
+  .fav-toggle:hover { border-color: #f5a623; color: #f5a623; }
+  .fav-toggle.is-fav { border-color: #f5a623; color: #f5a623; background: rgba(245,166,35,0.08); }
+
   .change-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: #1e2740; border-radius: 8px 8px 0 0; overflow: hidden; }
   .change-cell { background: #0d1420; padding: 12px 10px; text-align: right; }
   .cell-val { font-size: 14px; font-weight: 700; }
@@ -171,19 +191,22 @@
   .stat-lbl { color: #3a4560; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px; }
   .stat-val { color: #e8eaf0; font-size: 13px; font-weight: 600; }
 
-  .live-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 9px; color: #00e5a0; letter-spacing: 0.15em;
-    margin-bottom: 10px;
-  }
-  .live-dot {
-    width: 6px; height: 6px; border-radius: 50%; background: #00e5a0;
-    animation: blink 1.5s infinite;
-  }
+  .live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 9px; color: #00e5a0; letter-spacing: 0.15em; margin-bottom: 10px; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #00e5a0; animation: blink 1.5s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
   .footer { margin-top: 40px; color: #1e2740; font-size: 10px; letter-spacing: 0.2em; text-align: center; }
   .err-msg { color: #ff4d6d; font-size: 11px; text-align: center; padding: 16px 0; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #0d1420; border: 1px solid #1e2740; border-radius: 8px;
+    padding: 10px 20px; font-size: 12px; color: #e8eaf0;
+    opacity: 0; transition: opacity 0.3s; z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -192,7 +215,7 @@
   <!-- API KEY SCREEN -->
   <div id="apiScreen">
     <div style="font-size:28px">📈</div>
-    <h2>חיפוש מניות — Live</h2>
+    <h2>Stock Terminal</h2>
     <p>
       האפליקציה משתמשת ב-<strong style="color:#e8eaf0">Finnhub</strong> לנתונים חיים.<br>
       הירשם בחינם ב-<a href="https://finnhub.io" target="_blank">finnhub.io</a>
@@ -212,12 +235,12 @@
 
     <div class="header">
       <div class="tag">◈ MARKET TERMINAL — LIVE</div>
-      <h1>חיפוש מניות</h1>
-      <p>נתונים חיים · Finnhub API · שוק גלובלי</p>
+      <h1>STOCK TERMINAL</h1>
+      <p>LIVE DATA · FINNHUB API · GLOBAL MARKETS</p>
     </div>
 
     <div class="fav-label">
-      <span>★</span><small>מועדפים</small>
+      <span class="fav-star">★</span><small>מועדפים</small>
       <div class="line"></div>
     </div>
     <div class="fav-grid" id="favGrid"></div>
@@ -250,6 +273,13 @@
             <div class="result-change" id="rChange"></div>
           </div>
         </div>
+
+        <!-- Add/Remove favorites button -->
+        <button class="fav-toggle" id="favToggleBtn" onclick="toggleFavorite()">
+          <span id="favToggleStar">★</span>
+          <span id="favToggleText">הוסף למועדפים</span>
+        </button>
+
         <div class="chart-row"><svg id="chartSvg" width="110" height="55" style="overflow:visible"></svg></div>
         <div class="change-grid">
           <div class="change-cell"><div class="cell-val" id="cDollar"></div><div class="cell-lbl">שינוי בדולר</div></div>
@@ -270,13 +300,16 @@
       </div>
     </div>
 
-    <div class="footer">MARKET TERMINAL · FINNHUB LIVE DATA</div>
+    <div class="footer">STOCK TERMINAL · FINNHUB LIVE DATA</div>
   </div>
 </div>
 
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
 <script>
 const USD_ILS = 3.65;
-const FAVORITES = ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN"];
+const DEFAULT_FAVS = ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN"];
 const STOCKS = [
   { symbol: "AAPL",  name: "Apple Inc." },
   { symbol: "TSLA",  name: "Tesla Inc." },
@@ -287,15 +320,68 @@ const STOCKS = [
   { symbol: "SPY",   name: "S&P 500 ETF" },
   { symbol: "META",  name: "Meta Platforms" },
   { symbol: "NFLX",  name: "Netflix" },
+  { symbol: "BRK.B", name: "Berkshire Hathaway" },
+  { symbol: "JPM",   name: "JPMorgan Chase" },
+  { symbol: "V",     name: "Visa Inc." },
 ];
 
 let API_KEY = localStorage.getItem('finnhub_key') || '';
+let favorites = JSON.parse(localStorage.getItem('favorites') || 'null') || [...DEFAULT_FAVS];
+let currentSymbol = null;
 
-// ── API KEY SCREEN ──
-function initKeyScreen() {
-  if (API_KEY) {
-    showMain();
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── FAVORITES LOGIC ──
+function saveFavorites() {
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+}
+
+function isFav(sym) { return favorites.includes(sym); }
+
+function toggleFavorite() {
+  if (!currentSymbol) return;
+  if (isFav(currentSymbol)) {
+    favorites = favorites.filter(s => s !== currentSymbol);
+    showToast(`${currentSymbol} הוסר מהמועדפים`);
   } else {
+    if (favorites.length >= 5) {
+      // replace oldest
+      favorites.shift();
+    }
+    favorites.push(currentSymbol);
+    showToast(`${currentSymbol} נוסף למועדפים ★`);
+  }
+  saveFavorites();
+  updateFavToggleBtn();
+  buildFavorites();
+}
+
+function updateFavToggleBtn() {
+  const btn = document.getElementById('favToggleBtn');
+  const star = document.getElementById('favToggleStar');
+  const txt = document.getElementById('favToggleText');
+  if (!currentSymbol) return;
+  if (isFav(currentSymbol)) {
+    btn.classList.add('is-fav');
+    star.textContent = '★';
+    txt.textContent = 'הסר ממועדפים';
+  } else {
+    btn.classList.remove('is-fav');
+    star.textContent = '☆';
+    txt.textContent = 'הוסף למועדפים';
+  }
+}
+
+// ── API KEY ──
+function initKeyScreen() {
+  if (API_KEY) { showMain(); }
+  else {
     document.getElementById('apiScreen').style.display = 'flex';
     document.getElementById('mainApp').style.display = 'none';
   }
@@ -308,17 +394,14 @@ document.getElementById('saveKeyBtn').addEventListener('click', () => {
   localStorage.setItem('finnhub_key', val);
   showMain();
 });
-
 document.getElementById('apiKeyInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('saveKeyBtn').click();
 });
-
 function showMain() {
   document.getElementById('apiScreen').style.display = 'none';
   document.getElementById('mainApp').style.display = 'block';
   buildFavorites();
 }
-
 document.getElementById('resetKeyBtn').addEventListener('click', () => {
   localStorage.removeItem('finnhub_key');
   API_KEY = '';
@@ -327,7 +410,7 @@ document.getElementById('resetKeyBtn').addEventListener('click', () => {
   document.getElementById('apiKeyInput').value = '';
 });
 
-// ── FINNHUB FETCH ──
+// ── FINNHUB ──
 async function fetchQuote(symbol) {
   const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
   const res = await fetch(url);
@@ -336,20 +419,11 @@ async function fetchQuote(symbol) {
   if (!d.c || d.c === 0) throw new Error('סימול לא נמצא');
   const change = +(d.c - d.pc).toFixed(2);
   const changePct = +(((d.c - d.pc) / d.pc) * 100).toFixed(2);
-  return {
-    price: +d.c.toFixed(2),
-    change,
-    changePct,
-    high: +d.h.toFixed(2),
-    low: +d.l.toFixed(2),
-    prevClose: +d.pc.toFixed(2),
-    volume: "—",
-  };
+  return { price: +d.c.toFixed(2), change, changePct, high: +d.h.toFixed(2), low: +d.l.toFixed(2), prevClose: +d.pc.toFixed(2), volume: "—" };
 }
 
 // ── HELPERS ──
 function fmt(n) { return n >= 0 ? '+' + n : '' + n; }
-
 function getMeaning(pct) {
   const a = Math.abs(pct);
   if (a < 0.5) return "תנועה זניחה — המניה כמעט לא זזה היום";
@@ -370,16 +444,13 @@ function getDir(up, pct) {
     return "ירידה חדה — לחץ מכירות גבוה";
   }
 }
-
 function makeSpark(up, w, h) {
-  const pts = Array.from({length:16}, (_,i) =>
-    40 + (up ? i*1.8 : -i*1.8) + (Math.random()-0.5)*18
-  );
-  const mn = Math.min(...pts), mx = Math.max(...pts);
-  const ny = v => (h-2) - ((v-mn)/(mx-mn))*(h-6);
-  const d = pts.map((p,i) => `${i===0?'M':'L'} ${(i/15)*w} ${ny(p)}`).join(' ');
-  const c = up ? '#00e5a0' : '#ff4d6d';
-  const id = 'g'+Math.random().toString(36).slice(2);
+  const pts = Array.from({length:16}, (_,i) => 40+(up?i*1.8:-i*1.8)+(Math.random()-0.5)*18);
+  const mn=Math.min(...pts), mx=Math.max(...pts);
+  const ny=v=>(h-2)-((v-mn)/(mx-mn))*(h-6);
+  const d=pts.map((p,i)=>`${i===0?'M':'L'} ${(i/15)*w} ${ny(p)}`).join(' ');
+  const c=up?'#00e5a0':'#ff4d6d';
+  const id='g'+Math.random().toString(36).slice(2);
   return `<svg width="${w}" height="${h}" style="overflow:visible;display:block">
     <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="${c}" stop-opacity="0.2"/>
@@ -390,16 +461,17 @@ function makeSpark(up, w, h) {
   </svg>`;
 }
 
-// ── FAVORITES ──
+// ── BUILD FAVORITES ──
 function buildFavorites() {
   const grid = document.getElementById('favGrid');
   grid.innerHTML = '';
-  FAVORITES.forEach(sym => {
+  favorites.forEach(sym => {
     const card = document.createElement('div');
     card.className = 'fav-card';
     const name = STOCKS.find(s => s.symbol === sym)?.name || sym;
     card.innerHTML = `
       <div class="accent"></div>
+      <button class="fav-remove" title="הסר ממועדפים" onclick="removeFav('${sym}',event)">✕</button>
       <div class="sym">${sym}</div>
       <div class="co">${name}</div>
       <div class="loading-pulse">טוען...</div>
@@ -407,39 +479,40 @@ function buildFavorites() {
     card.addEventListener('click', () => doSearch(sym));
     grid.appendChild(card);
 
-    // load live price
     fetchQuote(sym).then(q => {
       const up = q.change >= 0;
       const c = up ? '#00e5a0' : '#ff4d6d';
-      card.querySelector('.accent').style.background =
-        `linear-gradient(90deg,transparent,${c}88,transparent)`;
-      card.style.setProperty('--hov-color', c);
       card.innerHTML = `
         <div class="accent" style="background:linear-gradient(90deg,transparent,${c}88,transparent)"></div>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+        <button class="fav-remove" title="הסר ממועדפים" onclick="removeFav('${sym}',event)">✕</button>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
           <div><div class="sym">${sym}</div><div class="co">${name}</div></div>
-          ${makeSpark(up, 55, 24)}
+          ${makeSpark(up, 50, 22)}
         </div>
         <div class="price">$${q.price.toLocaleString()}</div>
         <div class="chg">
-          <span class="chg-val" style="color:${c}">${up?'▲ ':' ▼'}${fmt(q.change)}$</span>
+          <span class="chg-val" style="color:${c}">${up?'▲ ':'▼ '}${fmt(q.change)}$</span>
           <span class="chg-pct" style="color:${c};background:${up?'rgba(0,229,160,0.1)':'rgba(255,77,109,0.1)'}">${fmt(q.changePct)}%</span>
         </div>
         <div class="chg-ils" style="color:${c}">${fmt((q.change*USD_ILS).toFixed(2))}₪</div>
       `;
       card.addEventListener('click', () => doSearch(sym));
-      card.addEventListener('mouseenter', () => {
-        card.style.borderColor = c;
-        card.style.boxShadow = `0 8px 20px ${up?'rgba(0,229,160,0.1)':'rgba(255,77,109,0.1)'}`;
-      });
-      card.addEventListener('mouseleave', () => {
-        card.style.borderColor = '#1a2236';
-        card.style.boxShadow = 'none';
-      });
+      card.addEventListener('mouseenter', () => { card.style.borderColor=c; card.style.boxShadow=`0 8px 20px ${up?'rgba(0,229,160,0.1)':'rgba(255,77,109,0.1)'}`; });
+      card.addEventListener('mouseleave', () => { card.style.borderColor='#1a2236'; card.style.boxShadow='none'; });
     }).catch(() => {
-      card.querySelector('.loading-pulse').textContent = 'שגיאה';
+      const lp = card.querySelector('.loading-pulse');
+      if (lp) lp.textContent = 'שגיאה';
     });
   });
+}
+
+function removeFav(sym, e) {
+  e.stopPropagation();
+  favorites = favorites.filter(s => s !== sym);
+  saveFavorites();
+  buildFavorites();
+  if (currentSymbol === sym) updateFavToggleBtn();
+  showToast(`${sym} הוסר מהמועדפים`);
 }
 
 // ── SEARCH ──
@@ -449,7 +522,7 @@ const sugsEl = document.getElementById('suggestions');
 
 input.addEventListener('focus', () => { searchBox.classList.add('focused'); showSugs(input.value); });
 input.addEventListener('blur', () => { setTimeout(() => { searchBox.classList.remove('focused'); sugsEl.style.display='none'; }, 150); });
-input.addEventListener('input', () => { input.value = input.value.toUpperCase(); showSugs(input.value); });
+input.addEventListener('input', () => { input.value=input.value.toUpperCase(); showSugs(input.value); });
 document.getElementById('searchBtn').addEventListener('click', () => { if (input.value.trim()) doSearch(input.value.trim().toUpperCase()); });
 input.addEventListener('keydown', e => { if (e.key==='Enter' && input.value.trim()) doSearch(input.value.trim().toUpperCase()); });
 
@@ -470,6 +543,7 @@ function showSugs(q) {
 
 async function doSearch(symbol) {
   input.value = symbol;
+  currentSymbol = symbol;
   sugsEl.style.display = 'none';
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('result').style.display = 'none';
@@ -485,23 +559,20 @@ async function doSearch(symbol) {
 
     document.getElementById('rSym').textContent = symbol;
     document.getElementById('rName').textContent = name;
-
     const badge = document.getElementById('rBadge');
     badge.textContent = `${up?'▲':'▼'} ${fmt(q.changePct)}%`;
     badge.style.cssText = `background:${up?'rgba(0,229,160,0.12)':'rgba(255,77,109,0.12)'};border:1px solid ${up?'rgba(0,229,160,0.3)':'rgba(255,77,109,0.3)'};color:${col}`;
-
     document.getElementById('rPrice').textContent = `$${q.price.toLocaleString()}`;
     document.getElementById('rChange').textContent = `${fmt(q.change)}$ היום`;
     document.getElementById('rChange').style.color = col;
     document.getElementById('topLine').style.background = `linear-gradient(90deg,transparent,${col},transparent)`;
 
-    // Chart (decorative sparkline based on direction)
-    const pts = Array.from({length:20}, (_,i) => 50+(up?i*1.5:-i*1.5)+(Math.random()-0.5)*20);
-    const mn=Math.min(...pts), mx=Math.max(...pts);
+    const pts=Array.from({length:20},(_,i)=>50+(up?i*1.5:-i*1.5)+(Math.random()-0.5)*20);
+    const mn=Math.min(...pts),mx=Math.max(...pts);
     const ny=v=>50-((v-mn)/(mx-mn))*42;
     const dp=pts.map((p,i)=>`${i===0?'M':'L'} ${(i/19)*110} ${ny(p)}`).join(' ');
     const gid='gc'+Math.random().toString(36).slice(2);
-    document.getElementById('chartSvg').innerHTML = `
+    document.getElementById('chartSvg').innerHTML=`
       <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${col}" stop-opacity="0.3"/>
         <stop offset="100%" stop-color="${col}" stop-opacity="0"/>
@@ -509,38 +580,34 @@ async function doSearch(symbol) {
       <path d="${dp} L 110 58 L 0 58 Z" fill="url(#${gid})"/>
       <path d="${dp}" stroke="${col}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
 
-    // Change cells
-    document.getElementById('cDollar').textContent = `${fmt(q.change)}$`;
-    document.getElementById('cDollar').style.color = col;
-    document.getElementById('cShekel').textContent = `${fmt((q.change*USD_ILS).toFixed(2))}₪`;
-    document.getElementById('cShekel').style.color = col;
-    document.getElementById('cPct').textContent = `${fmt(q.changePct)}%`;
-    document.getElementById('cPct').style.color = col;
+    document.getElementById('cDollar').textContent=`${fmt(q.change)}$`;
+    document.getElementById('cDollar').style.color=col;
+    document.getElementById('cShekel').textContent=`${fmt((q.change*USD_ILS).toFixed(2))}₪`;
+    document.getElementById('cShekel').style.color=col;
+    document.getElementById('cPct').textContent=`${fmt(q.changePct)}%`;
+    document.getElementById('cPct').style.color=col;
 
-    // Meaning
-    const strip = document.getElementById('meaningStrip');
-    strip.style.background = up ? 'rgba(0,229,160,0.04)' : 'rgba(255,77,109,0.04)';
-    const mDir = document.getElementById('mDir');
-    mDir.textContent = getDir(up, q.changePct);
-    mDir.style.color = col;
-    document.getElementById('mTxt').textContent = ` — ${getMeaning(q.changePct)}.`;
-    const extra = document.getElementById('mExtra');
-    if (Math.abs(q.changePct) >= 1) {
-      extra.innerHTML = ` 10 מניות = <span style="color:${col};font-weight:600">${fmt((q.change*10*USD_ILS).toFixed(0))}₪</span>.`;
-    } else { extra.textContent=''; }
+    const strip=document.getElementById('meaningStrip');
+    strip.style.background=up?'rgba(0,229,160,0.04)':'rgba(255,77,109,0.04)';
+    const mDir=document.getElementById('mDir');
+    mDir.textContent=getDir(up,q.changePct); mDir.style.color=col;
+    document.getElementById('mTxt').textContent=` — ${getMeaning(q.changePct)}.`;
+    const extra=document.getElementById('mExtra');
+    if(Math.abs(q.changePct)>=1){extra.innerHTML=` 10 מניות = <span style="color:${col};font-weight:600">${fmt((q.change*10*USD_ILS).toFixed(0))}₪</span>.`;}
+    else{extra.textContent='';}
 
-    // Stats
-    document.getElementById('sHigh').textContent = `$${q.high}`;
-    document.getElementById('sLow').textContent  = `$${q.low}`;
-    document.getElementById('sVol').textContent  = q.volume;
-    document.getElementById('sPrev').textContent = `$${q.prevClose}`;
+    document.getElementById('sHigh').textContent=`$${q.high}`;
+    document.getElementById('sLow').textContent=`$${q.low}`;
+    document.getElementById('sVol').textContent=q.volume;
+    document.getElementById('sPrev').textContent=`$${q.prevClose}`;
 
-    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').style.display='block';
+    updateFavToggleBtn();
   } catch(e) {
-    document.getElementById('loading').style.display = 'none';
-    const err = document.getElementById('errMsg');
-    err.textContent = e.message === 'סימול לא נמצא' ? '⚠ הסימול לא נמצא. נסה שנית.' : '⚠ שגיאה בטעינת הנתונים. בדוק את מפתח ה-API.';
-    err.style.display = 'block';
+    document.getElementById('loading').style.display='none';
+    const err=document.getElementById('errMsg');
+    err.textContent=e.message==='סימול לא נמצא'?'⚠ הסימול לא נמצא. נסה שנית.':'⚠ שגיאה בטעינת הנתונים. בדוק את מפתח ה-API.';
+    err.style.display='block';
   }
 }
 
