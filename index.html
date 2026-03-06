@@ -283,16 +283,26 @@ function updateFavToggleBtn() {
   }
 }
 
-// ── FETCH — uses allorigins proxy to bypass CORS ──
+// ── FETCH — tries multiple proxies ──
 async function fetchQuote(symbol) {
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
-  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
-  const res = await fetch(proxy);
-  if (!res.ok) throw new Error('שגיאת רשת');
-  const outer = await res.json();
-  const data = JSON.parse(outer.contents);
-  const q = data?.chart?.result?.[0];
-  if (!q) throw new Error('סימול לא נמצא');
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`,
+  ];
+  let data = null;
+  for (const proxyUrl of proxies) {
+    try {
+      const res = await fetch(proxyUrl);
+      if (!res.ok) continue;
+      const json = await res.json();
+      // allorigins wraps in .contents, corsproxy returns directly
+      const raw = json.contents ? JSON.parse(json.contents) : json;
+      if (raw?.chart?.result?.[0]) { data = raw; break; }
+    } catch(e) { continue; }
+  }
+  if (!data) throw new Error("לא ניתן לטעון נתונים");
+  const q = data.chart.result[0];
   const meta = q.meta;
   const price = meta.regularMarketPrice;
   const prev  = meta.previousClose || meta.chartPreviousClose;
@@ -304,7 +314,7 @@ async function fetchQuote(symbol) {
     high: +(meta.regularMarketDayHigh || price).toFixed(2),
     low:  +(meta.regularMarketDayLow  || price).toFixed(2),
     prevClose: +prev.toFixed(2),
-    volume: vol ? (vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : vol >= 1e6 ? (vol/1e6).toFixed(1)+'M' : vol >= 1e3 ? (vol/1e3).toFixed(0)+'K' : vol) : '—',
+    volume: vol ? (vol >= 1e9 ? (vol/1e9).toFixed(1)+"B" : vol >= 1e6 ? (vol/1e6).toFixed(1)+"M" : vol >= 1e3 ? (vol/1e3).toFixed(0)+"K" : vol) : "—",
   };
 }
 
