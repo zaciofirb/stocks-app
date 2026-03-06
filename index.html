@@ -7,82 +7,39 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: #080c14;
-    color: #e8eaf0;
+    background: #080c14; color: #e8eaf0;
     font-family: 'Courier New', monospace;
-    padding: 16px 12px 40px;
-    min-height: 100vh;
-    direction: rtl;
+    padding: 16px 12px 40px; min-height: 100vh; direction: rtl;
   }
   body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image:
-      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none; z-index: 0;
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(0,229,160,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.03) 1px,transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
   }
   .wrap { position: relative; z-index: 1; }
 
-  /* API KEY SCREEN */
-  #apiScreen {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; min-height: 80vh; text-align: center; gap: 16px;
-  }
-  #apiScreen h2 { font-size: 20px; color: #00e5a0; letter-spacing: 0.1em; }
-  #apiScreen p { color: #5a6478; font-size: 12px; line-height: 1.7; max-width: 340px; }
-  #apiScreen a { color: #00e5a0; }
-  #apiKeyInput {
-    width: 100%; max-width: 340px; padding: 12px 14px;
-    background: #0d1420; border: 1px solid #1e2740;
-    border-radius: 8px; color: #e8eaf0; font-size: 13px;
-    font-family: 'Courier New', monospace; outline: none;
-    direction: ltr; text-align: left;
-  }
-  #apiKeyInput:focus { border-color: #00e5a0; }
-  #saveKeyBtn {
-    padding: 10px 28px; background: #00e5a0; color: #080c14;
-    border: none; border-radius: 6px; cursor: pointer;
-    font-family: 'Courier New', monospace; font-size: 13px;
-    font-weight: 700; letter-spacing: 0.1em;
-  }
-  #saveKeyBtn:hover { background: #00ffb3; }
-
-  #mainApp { display: none; }
+  #mainApp { display: block; }
 
   .header { text-align: center; margin-bottom: 16px; direction: ltr; }
   .header .tag { font-size: 10px; letter-spacing: 0.4em; color: #00e5a0; margin-bottom: 6px; }
   .header h1 {
-    font-size: clamp(28px, 6vw, 52px); font-weight: 900;
-    background: linear-gradient(135deg, #fff 30%, #00e5a0 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1;
-    letter-spacing: 0.05em;
+    font-size: clamp(28px,6vw,52px); font-weight: 900;
+    background: linear-gradient(135deg,#fff 30%,#00e5a0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1; letter-spacing: 0.05em;
   }
   .header p { color: #5a6478; font-size: 11px; margin-top: 5px; letter-spacing: 0.1em; }
-
-  .reset-key { text-align: left; margin-bottom: 10px; }
-  .reset-key button {
-    background: none; border: 1px solid #1e2740; color: #3a4560;
-    font-size: 9px; letter-spacing: 0.15em; padding: 3px 8px;
-    border-radius: 4px; cursor: pointer; font-family: 'Courier New', monospace;
-  }
-  .reset-key button:hover { border-color: #00e5a0; color: #00e5a0; }
 
   .fav-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .fav-label .fav-star { color: #f5a623; font-size: 11px; }
   .fav-label small { color: #3a4560; font-size: 9px; letter-spacing: 0.3em; }
-  .fav-label .line { flex: 1; height: 1px; background: linear-gradient(to right, #1e2740, transparent); }
+  .fav-label .line { flex: 1; height: 1px; background: linear-gradient(to right,#1e2740,transparent); }
 
-  .fav-grid {
-    display: grid; grid-template-columns: repeat(5, 1fr);
-    gap: 8px; margin-bottom: 14px;
-  }
+  .fav-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 14px; }
 
   .fav-card {
-    background: #0d1420; border: 1px solid #1a2236;
-    border-radius: 10px; padding: 10px; cursor: pointer;
-    position: relative; overflow: hidden;
+    background: #0d1420; border: 1px solid #1a2236; border-radius: 10px;
+    padding: 10px; cursor: pointer; position: relative; overflow: hidden;
     transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
   }
   .fav-card:hover { transform: translateY(-2px); }
@@ -95,26 +52,20 @@
   .fav-card .chg-pct { font-size: 9px; padding: 1px 5px; border-radius: 100px; }
   .fav-card .chg-ils { font-size: 9px; margin-top: 2px; }
   .fav-card .loading-pulse { font-size: 9px; color: #3a4560; animation: pulse 1.5s infinite; }
-
-  /* Remove button on fav card */
   .fav-remove {
-    position: absolute; top: 6px; left: 6px;
-    background: none; border: none; color: #2a3650;
-    font-size: 12px; cursor: pointer; line-height: 1;
-    padding: 2px; transition: color 0.15s;
-    z-index: 2;
+    position: absolute; top: 6px; left: 6px; background: none; border: none;
+    color: #2a3650; font-size: 12px; cursor: pointer; line-height: 1;
+    padding: 2px; transition: color 0.15s; z-index: 2;
   }
   .fav-remove:hover { color: #ff4d6d; }
-
   @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
 
-  .divider { height: 1px; background: linear-gradient(90deg, #1e2740, transparent); margin-bottom: 14px; }
+  .divider { height: 1px; background: linear-gradient(90deg,#1e2740,transparent); margin-bottom: 14px; }
 
   .search-wrap { position: relative; z-index: 10; margin-bottom: 16px; }
   .search-box {
-    display: flex; background: #0d1420;
-    border: 1px solid #1e2740; border-radius: 8px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    display: flex; background: #0d1420; border: 1px solid #1e2740;
+    border-radius: 8px; transition: border-color 0.2s, box-shadow 0.2s;
   }
   .search-box.focused { border-color: #00e5a0; box-shadow: 0 0 0 3px rgba(0,229,160,0.1); }
   .search-icon { padding: 0 12px; display: flex; align-items: center; color: #3a4560; font-size: 18px; }
@@ -152,7 +103,7 @@
   @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
 
   .result-card {
-    background: linear-gradient(135deg, #0d1420, #0a1018);
+    background: linear-gradient(135deg,#0d1420,#0a1018);
     border: 1px solid #1e2740; border-radius: 14px;
     padding: 16px; position: relative; overflow: hidden;
   }
@@ -165,14 +116,11 @@
   .result-change { font-size: 12px; margin-top: 2px; direction: ltr; text-align: left; }
   .chart-row { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 
-  /* Add to favorites button in result */
   .fav-toggle {
     display: flex; align-items: center; gap: 6px;
-    background: none; border: 1px solid #1e2740;
-    border-radius: 6px; padding: 5px 12px;
-    color: #5a6478; font-size: 11px; cursor: pointer;
-    font-family: 'Courier New', monospace;
-    transition: all 0.2s; margin-bottom: 12px;
+    background: none; border: 1px solid #1e2740; border-radius: 6px;
+    padding: 5px 12px; color: #5a6478; font-size: 11px; cursor: pointer;
+    font-family: 'Courier New', monospace; transition: all 0.2s; margin-bottom: 12px;
   }
   .fav-toggle:hover { border-color: #f5a623; color: #f5a623; }
   .fav-toggle.is-fav { border-color: #f5a623; color: #f5a623; background: rgba(245,166,35,0.08); }
@@ -198,45 +146,22 @@
   .footer { margin-top: 40px; color: #1e2740; font-size: 10px; letter-spacing: 0.2em; text-align: center; }
   .err-msg { color: #ff4d6d; font-size: 11px; text-align: center; padding: 16px 0; }
 
-  /* Toast notification */
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: #0d1420; border: 1px solid #1e2740; border-radius: 8px;
     padding: 10px 20px; font-size: 12px; color: #e8eaf0;
-    opacity: 0; transition: opacity 0.3s; z-index: 999;
-    white-space: nowrap;
+    opacity: 0; transition: opacity 0.3s; z-index: 999; white-space: nowrap;
   }
   .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 <div class="wrap">
-
-  <!-- API KEY SCREEN -->
-  <div id="apiScreen">
-    <div style="font-size:28px">📈</div>
-    <h2>Stock Terminal</h2>
-    <p>
-      האפליקציה משתמשת ב-<strong style="color:#e8eaf0">Finnhub</strong> לנתונים חיים.<br>
-      הירשם בחינם ב-<a href="https://finnhub.io" target="_blank">finnhub.io</a>
-      וקבל מפתח API חינמי.<br><br>
-      המפתח נשמר רק במכשיר שלך.
-    </p>
-    <input id="apiKeyInput" type="text" placeholder="הדבק כאן את מפתח ה-API שלך..." />
-    <button id="saveKeyBtn">התחל →</button>
-  </div>
-
-  <!-- MAIN APP -->
   <div id="mainApp">
-
-    <div class="reset-key">
-      <button id="resetKeyBtn">⚙ החלף מפתח API</button>
-    </div>
-
     <div class="header">
       <div class="tag">◈ MARKET TERMINAL — LIVE</div>
       <h1>STOCK TERMINAL</h1>
-      <p>LIVE DATA · FINNHUB API · GLOBAL MARKETS</p>
+      <p>LIVE DATA · GLOBAL MARKETS</p>
     </div>
 
     <div class="fav-label">
@@ -244,7 +169,6 @@
       <div class="line"></div>
     </div>
     <div class="fav-grid" id="favGrid"></div>
-
     <div class="divider"></div>
 
     <div class="search-wrap">
@@ -273,13 +197,10 @@
             <div class="result-change" id="rChange"></div>
           </div>
         </div>
-
-        <!-- Add/Remove favorites button -->
         <button class="fav-toggle" id="favToggleBtn" onclick="toggleFavorite()">
           <span id="favToggleStar">★</span>
           <span id="favToggleText">הוסף למועדפים</span>
         </button>
-
         <div class="chart-row"><svg id="chartSvg" width="110" height="55" style="overflow:visible"></svg></div>
         <div class="change-grid">
           <div class="change-cell"><div class="cell-val" id="cDollar"></div><div class="cell-lbl">שינוי בדולר</div></div>
@@ -300,11 +221,9 @@
       </div>
     </div>
 
-    <div class="footer">STOCK TERMINAL · FINNHUB LIVE DATA</div>
+    <div class="footer">STOCK TERMINAL · LIVE DATA</div>
   </div>
 </div>
-
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -320,46 +239,36 @@ const STOCKS = [
   { symbol: "SPY",   name: "S&P 500 ETF" },
   { symbol: "META",  name: "Meta Platforms" },
   { symbol: "NFLX",  name: "Netflix" },
-  { symbol: "BRK.B", name: "Berkshire Hathaway" },
   { symbol: "JPM",   name: "JPMorgan Chase" },
   { symbol: "V",     name: "Visa Inc." },
+  { symbol: "BRK.B", name: "Berkshire Hathaway" },
 ];
 
-let API_KEY = localStorage.getItem('finnhub_key') || '';
 let favorites = JSON.parse(localStorage.getItem('favorites') || 'null') || [...DEFAULT_FAVS];
 let currentSymbol = null;
 
 // ── TOAST ──
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-// ── FAVORITES LOGIC ──
-function saveFavorites() {
-  localStorage.setItem('favorites', JSON.stringify(favorites));
-}
-
+// ── FAVORITES ──
+function saveFavorites() { localStorage.setItem('favorites', JSON.stringify(favorites)); }
 function isFav(sym) { return favorites.includes(sym); }
 
 function toggleFavorite() {
   if (!currentSymbol) return;
   if (isFav(currentSymbol)) {
     favorites = favorites.filter(s => s !== currentSymbol);
-    showToast(`${currentSymbol} הוסר מהמועדפים`);
+    showToast(currentSymbol + ' הוסר מהמועדפים');
   } else {
-    if (favorites.length >= 5) {
-      // replace oldest
-      favorites.shift();
-    }
+    if (favorites.length >= 5) favorites.shift();
     favorites.push(currentSymbol);
-    showToast(`${currentSymbol} נוסף למועדפים ★`);
+    showToast(currentSymbol + ' נוסף למועדפים ★');
   }
-  saveFavorites();
-  updateFavToggleBtn();
-  buildFavorites();
+  saveFavorites(); updateFavToggleBtn(); buildFavorites();
 }
 
 function updateFavToggleBtn() {
@@ -368,58 +277,35 @@ function updateFavToggleBtn() {
   const txt = document.getElementById('favToggleText');
   if (!currentSymbol) return;
   if (isFav(currentSymbol)) {
-    btn.classList.add('is-fav');
-    star.textContent = '★';
-    txt.textContent = 'הסר ממועדפים';
+    btn.classList.add('is-fav'); star.textContent = '★'; txt.textContent = 'הסר ממועדפים';
   } else {
-    btn.classList.remove('is-fav');
-    star.textContent = '☆';
-    txt.textContent = 'הוסף למועדפים';
+    btn.classList.remove('is-fav'); star.textContent = '☆'; txt.textContent = 'הוסף למועדפים';
   }
 }
 
-// ── API KEY ──
-function initKeyScreen() {
-  if (API_KEY) { showMain(); }
-  else {
-    document.getElementById('apiScreen').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'none';
-  }
-}
-
-document.getElementById('saveKeyBtn').addEventListener('click', () => {
-  const val = document.getElementById('apiKeyInput').value.trim();
-  if (!val) return;
-  API_KEY = val;
-  localStorage.setItem('finnhub_key', val);
-  showMain();
-});
-document.getElementById('apiKeyInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('saveKeyBtn').click();
-});
-function showMain() {
-  document.getElementById('apiScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display = 'block';
-  buildFavorites();
-}
-document.getElementById('resetKeyBtn').addEventListener('click', () => {
-  localStorage.removeItem('finnhub_key');
-  API_KEY = '';
-  document.getElementById('apiScreen').style.display = 'flex';
-  document.getElementById('mainApp').style.display = 'none';
-  document.getElementById('apiKeyInput').value = '';
-});
-
-// ── FINNHUB ──
+// ── FETCH — uses allorigins proxy to bypass CORS ──
 async function fetchQuote(symbol) {
-  const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('API error');
-  const d = await res.json();
-  if (!d.c || d.c === 0) throw new Error('סימול לא נמצא');
-  const change = +(d.c - d.pc).toFixed(2);
-  const changePct = +(((d.c - d.pc) / d.pc) * 100).toFixed(2);
-  return { price: +d.c.toFixed(2), change, changePct, high: +d.h.toFixed(2), low: +d.l.toFixed(2), prevClose: +d.pc.toFixed(2), volume: "—" };
+  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+  const res = await fetch(proxy);
+  if (!res.ok) throw new Error('שגיאת רשת');
+  const outer = await res.json();
+  const data = JSON.parse(outer.contents);
+  const q = data?.chart?.result?.[0];
+  if (!q) throw new Error('סימול לא נמצא');
+  const meta = q.meta;
+  const price = meta.regularMarketPrice;
+  const prev  = meta.previousClose || meta.chartPreviousClose;
+  const change = +(price - prev).toFixed(2);
+  const changePct = +(((price - prev) / prev) * 100).toFixed(2);
+  const vol = meta.regularMarketVolume;
+  return {
+    price: +price.toFixed(2), change, changePct,
+    high: +(meta.regularMarketDayHigh || price).toFixed(2),
+    low:  +(meta.regularMarketDayLow  || price).toFixed(2),
+    prevClose: +prev.toFixed(2),
+    volume: vol ? (vol >= 1e9 ? (vol/1e9).toFixed(1)+'B' : vol >= 1e6 ? (vol/1e6).toFixed(1)+'M' : vol >= 1e3 ? (vol/1e3).toFixed(0)+'K' : vol) : '—',
+  };
 }
 
 // ── HELPERS ──
@@ -445,8 +331,8 @@ function getDir(up, pct) {
   }
 }
 function makeSpark(up, w, h) {
-  const pts = Array.from({length:16}, (_,i) => 40+(up?i*1.8:-i*1.8)+(Math.random()-0.5)*18);
-  const mn=Math.min(...pts), mx=Math.max(...pts);
+  const pts = Array.from({length:16},(_,i)=>40+(up?i*1.8:-i*1.8)+(Math.random()-0.5)*18);
+  const mn=Math.min(...pts),mx=Math.max(...pts);
   const ny=v=>(h-2)-((v-mn)/(mx-mn))*(h-6);
   const d=pts.map((p,i)=>`${i===0?'M':'L'} ${(i/15)*w} ${ny(p)}`).join(' ');
   const c=up?'#00e5a0':'#ff4d6d';
@@ -471,11 +357,10 @@ function buildFavorites() {
     const name = STOCKS.find(s => s.symbol === sym)?.name || sym;
     card.innerHTML = `
       <div class="accent"></div>
-      <button class="fav-remove" title="הסר ממועדפים" onclick="removeFav('${sym}',event)">✕</button>
+      <button class="fav-remove" title="הסר" onclick="removeFav('${sym}',event)">✕</button>
       <div class="sym">${sym}</div>
       <div class="co">${name}</div>
-      <div class="loading-pulse">טוען...</div>
-    `;
+      <div class="loading-pulse">טוען...</div>`;
     card.addEventListener('click', () => doSearch(sym));
     grid.appendChild(card);
 
@@ -484,24 +369,23 @@ function buildFavorites() {
       const c = up ? '#00e5a0' : '#ff4d6d';
       card.innerHTML = `
         <div class="accent" style="background:linear-gradient(90deg,transparent,${c}88,transparent)"></div>
-        <button class="fav-remove" title="הסר ממועדפים" onclick="removeFav('${sym}',event)">✕</button>
+        <button class="fav-remove" title="הסר" onclick="removeFav('${sym}',event)">✕</button>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px">
           <div><div class="sym">${sym}</div><div class="co">${name}</div></div>
-          ${makeSpark(up, 50, 22)}
+          ${makeSpark(up,50,22)}
         </div>
         <div class="price">$${q.price.toLocaleString()}</div>
         <div class="chg">
           <span class="chg-val" style="color:${c}">${up?'▲ ':'▼ '}${fmt(q.change)}$</span>
           <span class="chg-pct" style="color:${c};background:${up?'rgba(0,229,160,0.1)':'rgba(255,77,109,0.1)'}">${fmt(q.changePct)}%</span>
         </div>
-        <div class="chg-ils" style="color:${c}">${fmt((q.change*USD_ILS).toFixed(2))}₪</div>
-      `;
+        <div class="chg-ils" style="color:${c}">${fmt((q.change*USD_ILS).toFixed(2))}₪</div>`;
       card.addEventListener('click', () => doSearch(sym));
       card.addEventListener('mouseenter', () => { card.style.borderColor=c; card.style.boxShadow=`0 8px 20px ${up?'rgba(0,229,160,0.1)':'rgba(255,77,109,0.1)'}`; });
       card.addEventListener('mouseleave', () => { card.style.borderColor='#1a2236'; card.style.boxShadow='none'; });
     }).catch(() => {
       const lp = card.querySelector('.loading-pulse');
-      if (lp) lp.textContent = 'שגיאה';
+      if (lp) lp.textContent = '—';
     });
   });
 }
@@ -509,10 +393,9 @@ function buildFavorites() {
 function removeFav(sym, e) {
   e.stopPropagation();
   favorites = favorites.filter(s => s !== sym);
-  saveFavorites();
-  buildFavorites();
+  saveFavorites(); buildFavorites();
   if (currentSymbol === sym) updateFavToggleBtn();
-  showToast(`${sym} הוסר מהמועדפים`);
+  showToast(sym + ' הוסר מהמועדפים');
 }
 
 // ── SEARCH ──
@@ -533,8 +416,7 @@ function showSugs(q) {
   sugsEl.innerHTML = m.map(s =>
     `<div class="sug-item" data-sym="${s.symbol}">
       <span class="sug-sym">${s.symbol}</span><span class="sug-name">${s.name}</span>
-    </div>`
-  ).join('');
+    </div>`).join('');
   sugsEl.querySelectorAll('.sug-item').forEach(el => {
     el.addEventListener('mousedown', () => doSearch(el.dataset.sym));
   });
@@ -542,8 +424,7 @@ function showSugs(q) {
 }
 
 async function doSearch(symbol) {
-  input.value = symbol;
-  currentSymbol = symbol;
+  input.value = symbol; currentSymbol = symbol;
   sugsEl.style.display = 'none';
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('result').style.display = 'none';
@@ -552,7 +433,6 @@ async function doSearch(symbol) {
   try {
     const q = await fetchQuote(symbol);
     document.getElementById('loading').style.display = 'none';
-
     const up = q.change >= 0;
     const col = up ? '#00e5a0' : '#ff4d6d';
     const name = STOCKS.find(s => s.symbol === symbol)?.name || symbol;
@@ -580,12 +460,9 @@ async function doSearch(symbol) {
       <path d="${dp} L 110 58 L 0 58 Z" fill="url(#${gid})"/>
       <path d="${dp}" stroke="${col}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
 
-    document.getElementById('cDollar').textContent=`${fmt(q.change)}$`;
-    document.getElementById('cDollar').style.color=col;
-    document.getElementById('cShekel').textContent=`${fmt((q.change*USD_ILS).toFixed(2))}₪`;
-    document.getElementById('cShekel').style.color=col;
-    document.getElementById('cPct').textContent=`${fmt(q.changePct)}%`;
-    document.getElementById('cPct').style.color=col;
+    document.getElementById('cDollar').textContent=`${fmt(q.change)}$`; document.getElementById('cDollar').style.color=col;
+    document.getElementById('cShekel').textContent=`${fmt((q.change*USD_ILS).toFixed(2))}₪`; document.getElementById('cShekel').style.color=col;
+    document.getElementById('cPct').textContent=`${fmt(q.changePct)}%`; document.getElementById('cPct').style.color=col;
 
     const strip=document.getElementById('meaningStrip');
     strip.style.background=up?'rgba(0,229,160,0.04)':'rgba(255,77,109,0.04)';
@@ -600,18 +477,17 @@ async function doSearch(symbol) {
     document.getElementById('sLow').textContent=`$${q.low}`;
     document.getElementById('sVol').textContent=q.volume;
     document.getElementById('sPrev').textContent=`$${q.prevClose}`;
-
     document.getElementById('result').style.display='block';
     updateFavToggleBtn();
   } catch(e) {
     document.getElementById('loading').style.display='none';
     const err=document.getElementById('errMsg');
-    err.textContent=e.message==='סימול לא נמצא'?'⚠ הסימול לא נמצא. נסה שנית.':'⚠ שגיאה בטעינת הנתונים. בדוק את מפתח ה-API.';
+    err.textContent='⚠ ' + (e.message || 'שגיאה בטעינת נתונים');
     err.style.display='block';
   }
 }
 
-initKeyScreen();
+buildFavorites();
 </script>
 </body>
 </html>
