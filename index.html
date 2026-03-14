@@ -488,9 +488,8 @@ async function fetchWithTimeout(url, ms=8000) {
 function getProxies(yahooUrl) {
   const enc = encodeURIComponent(yahooUrl);
   return [
-    `https://corsproxy.io/?${enc}`,
+    `https://corsproxy.io/?${yahooUrl}`,
     `https://api.allorigins.win/get?url=${enc}`,
-    `https://thingproxy.freeboard.io/fetch/${yahooUrl}`,
     `https://api.codetabs.com/v1/proxy?quest=${enc}`,
   ];
 }
